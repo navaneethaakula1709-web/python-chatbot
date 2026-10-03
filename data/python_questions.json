@@ -1,0 +1,262 @@
+[
+    {
+        "category": "python_basics",
+        "question": "What is Python?",
+        "answer": "Python is a high-level, interpreted, general-purpose programming language known for its simple and readable syntax."
+    },
+    {
+        "category": "python_basics",
+        "question": "Who invented Python?",
+        "answer": "Python was created by Guido van Rossum. He started developing Python in the late 1980s, and the first public release was made in 1991."
+    },
+    {
+        "category": "python_basics",
+        "question": "Who created Python?",
+        "answer": "Python was created by Guido van Rossum."
+    },
+    {
+        "category": "python_basics",
+        "question": "Who is the creator of Python?",
+        "answer": "Guido van Rossum is the creator of Python."
+    },
+    {
+        "category": "python_basics",
+        "question": "When was Python created?",
+        "answer": "Python was started in the late 1980s and its first public release was made in 1991."
+    },
+    {
+        "category": "python_basics",
+        "question": "What are variables in Python?",
+        "answer": "A variable is a name used to store a value in Python. For example, age = 20."
+    },
+    {
+        "category": "python_basics",
+        "question": "What are data types in Python?",
+        "answer": "Common Python data types include integer, float, string, boolean, list, tuple, set, and dictionary."
+    },
+    {
+        "category": "python_basics",
+        "question": "What is type casting?",
+        "answer": "Type casting is the process of converting a value from one data type to another."
+    },
+    {
+        "category": "control_statements",
+        "question": "What is an if statement?",
+        "answer": "An if statement executes a block of code when a specified condition is true."
+    },
+    {
+        "category": "control_statements",
+        "question": "What is a for loop?",
+        "answer": "A for loop is used to iterate over elements of a sequence such as a list, string, tuple, or range."
+    },
+    {
+        "category": "control_statements",
+        "question": "What is a while loop?",
+        "answer": "A while loop repeatedly executes a block of code as long as its condition is true."
+    },
+    {
+        "category": "data_structures",
+        "question": "What is a list?",
+        "answer": "A list is an ordered and mutable collection of elements in Python."
+    },
+    {
+        "category": "data_structures",
+        "question": "What is a tuple?",
+        "answer": "A tuple is an ordered and immutable collection of elements."
+    },
+    {
+        "category": "data_structures",
+        "question": "What is a dictionary?",
+        "answer": "A dictionary stores data in key-value pairs."
+    },
+    {
+        "category": "functions",
+        "question": "What is a function?",
+        "answer": "A function is a reusable block of code designed to perform a specific task."
+    },
+    {
+        "category": "functions",
+        "question": "What is a lambda function?",
+        "answer": "A lambda function is a small anonymous function written using the lambda keyword."
+    },
+    {
+        "category": "functions",
+        "question": "What is recursion?",
+        "answer": "Recursion is a programming technique in which a function calls itself."
+    },
+    {
+        "category": "oops",
+        "question": "What is a class?",
+        "answer": "A class is a blueprint for creating objects in object-oriented programming."
+    },
+    {
+        "category": "oops",
+        "question": "What is an object?",
+        "answer": "An object is an instance of a class."
+    },
+    {
+        "category": "oops",
+        "question": "What is a constructor?",
+        "answer": "A constructor is a special method used when an object is created. In Python, __init__() is commonly used as a constructor."
+    },
+    {
+        "category": "oops",
+        "question": "What is inheritance?",
+        "answer": "Inheritance allows a child class to acquire attributes and methods from a parent class."
+    },
+    {
+        "category": "oops",
+        "question": "What is polymorphism?",
+        "answer": "Polymorphism allows the same interface or method to behave differently for different objects."
+    },
+    {
+        "category": "oops",
+        "question": "What is encapsulation?",
+        "answer": "Encapsulation means combining data and methods inside a class and controlling access to the data."
+    },
+    {
+        "category": "advanced_python",
+        "question": "What is exception handling?",
+        "answer": "Exception handling is used to handle runtime errors using try, except, else, and finally."
+    },
+    {
+        "category": "advanced_python",
+        "question": "What is file handling?",
+        "answer": "File handling allows Python programs to read, write, create, and modify files."
+    },
+    {
+        "category": "advanced_python",
+        "question": "What is a module?",
+        "answer": "A module is a Python file containing reusable functions, classes, and variables."
+    },
+    {
+        "category": "advanced_python",
+        "question": "What is pip?",
+        "answer": "PIP is Python's package installer and is used to install and manage Python packages."
+    },
+    {
+        "category": "libraries",
+        "question": "What is NumPy?",
+        "answer": "NumPy is a Python library used for numerical computing and multidimensional arrays."
+    },
+    {
+        "category": "libraries",
+        "question": "What is Pandas?",
+        "answer": "Pandas is a Python library used for data manipulation and analysis."
+    },
+    {
+        "category": "libraries",
+        "question": "What is Scikit-learn?",
+        "answer": "Scikit-learn is a Python machine learning library containing algorithms and tools for machine learning."
+    },
+    {
+        "category": "data_science",
+        "question": "What is data science?",
+        "answer": "Data science combines programming, statistics, data analysis, and machine learning to extract useful information from data."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is machine learning?",
+        "answer": "Machine learning is a branch of artificial intelligence where computers learn patterns from data."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is supervised learning?",
+        "answer": "Supervised learning trains a model using labeled data where the expected output is known."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is unsupervised learning?",
+        "answer": "Unsupervised learning finds patterns or structures in data without predefined output labels."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is classification?",
+        "answer": "Classification is a supervised machine learning task used to predict categories or classes."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is regression?",
+        "answer": "Regression is a machine learning task used to predict continuous numerical values."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is random forest?",
+        "answer": "Random Forest is an ensemble machine learning algorithm that combines multiple decision trees."
+    },
+    {
+        "category": "machine_learning",
+        "question": "What is overfitting?",
+        "answer": "Overfitting occurs when a model learns the training data too closely and performs poorly on unseen data."
+    },
+    {
+        "category": "nlp",
+        "question": "What is NLP?",
+        "answer": "NLP stands for Natural Language Processing. It helps computers process and understand human language."
+    },
+    {
+        "category": "nlp",
+        "question": "What is tokenization?",
+        "answer": "Tokenization is the process of breaking text into smaller units such as words or sentences."
+    },
+    {
+        "category": "nlp",
+        "question": "What is stemming?",
+        "answer": "Stemming reduces words to a simpler root form by removing prefixes or suffixes."
+    },
+    {
+        "category": "nlp",
+        "question": "What is lemmatization?",
+        "answer": "Lemmatization converts words into their meaningful base or dictionary form."
+    },
+    {
+        "category": "nlp",
+        "question": "What is TF-IDF?",
+        "answer": "TF-IDF is a text representation technique that gives importance to words based on their frequency and rarity."
+    },
+    {
+        "category": "interview",
+        "question": "What Python topics are commonly asked in interviews?",
+        "answer": "Common topics include data types, functions, OOP, exception handling, file handling, modules, iterators, generators, and problem solving."
+    },
+    {
+        "category": "interview",
+        "question": "What is the difference between a list and tuple?",
+        "answer": "A list is mutable, while a tuple is immutable."
+    },
+    {
+        "category": "interview",
+        "question": "Why is Python popular for jobs?",
+        "answer": "Python is widely used because of its readable syntax, large ecosystem, and applications in development, automation, data science, and machine learning."
+    },
+    {
+        "category": "practical",
+        "question": "How do I install a Python package?",
+        "answer": "You can usually install a Python package using the command pip install package_name."
+    },
+    {
+        "category": "practical",
+        "question": "How do I run a Python program?",
+        "answer": "Save the program with a .py extension and run it using python filename.py in the terminal."
+    },
+    {
+        "category": "practical",
+        "question": "What is debugging?",
+        "answer": "Debugging is the process of finding and fixing errors or unexpected behavior in a program."
+    },
+    {
+        "category": "projects",
+        "question": "How do I start a Python project?",
+        "answer": "Start by defining the problem, planning the features, creating a project structure, selecting libraries, implementing the solution, testing it, and documenting it."
+    },
+    {
+        "category": "projects",
+        "question": "What is requirements.txt?",
+        "answer": "requirements.txt is a file that lists the Python packages and versions required by a project."
+    },
+    {
+        "category": "projects",
+        "question": "What is GitHub?",
+        "answer": "GitHub is a platform used to store, manage, share, and collaborate on software projects using Git."
+    }
+]
