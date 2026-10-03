@@ -1,4 +1,5 @@
 import random
+import streamlit as st
 
 
 QUESTIONS = {
@@ -71,32 +72,8 @@ QUESTIONS = {
 }
 
 
-def choose_topic():
-    print()
-    print("=" * 65)
-    print("                  PRACTICE TOPICS")
-    print("=" * 65)
-    print("1. Python")
-    print("2. OOP")
-    print("3. SQL")
-    print("4. Machine Learning")
-    print("5. NLP")
-    print("=" * 65)
-
-
-def get_topic(choice):
-    topics = {
-        "1": "python",
-        "2": "oop",
-        "3": "sql",
-        "4": "machine learning",
-        "5": "nlp"
-    }
-
-    return topics.get(choice)
-
-
 def check_answer(answer, keywords):
+
     answer_lower = answer.lower()
 
     matched = 0
@@ -110,97 +87,141 @@ def check_answer(answer, keywords):
     return percentage
 
 
-def practice_topic(topic):
-    question_data = random.choice(QUESTIONS[topic])
+def practice_mode():
 
-    print()
-    print("=" * 65)
-    print("                     PRACTICE QUESTION")
-    print("=" * 65)
+    st.title("📝 Practice Mode")
 
-    print()
-    print(question_data["question"])
-
-    print()
-    print("Type your answer below.")
-    print("Type 'skip' to see the expected concepts.")
-    print("Type 'back' to return.")
-
-    answer = input("\nYour Answer:\n").strip()
-
-    if answer.lower() == "back":
-        return False
-
-    if answer.lower() == "skip":
-        print()
-        print("Expected concepts:")
-        for keyword in question_data["keywords"]:
-            print(f"• {keyword}")
-        return True
-
-    score = check_answer(
-        answer,
-        question_data["keywords"]
+    st.write(
+        "Practice programming and technical concepts."
     )
 
-    print()
-    print("=" * 65)
+    # Topic selection
+    topic = st.selectbox(
+        "Choose a topic",
+        [
+            "Python",
+            "OOP",
+            "SQL",
+            "Machine Learning",
+            "NLP"
+        ]
+    )
 
-    if score >= 70:
-        print("Good attempt! ✅")
-        print(f"Basic concept coverage: {score:.0f}%")
+    topic_key = topic.lower()
 
-    elif score >= 40:
-        print("You are on the right track. 👍")
-        print(f"Basic concept coverage: {score:.0f}%")
-        print("Try improving your answer.")
+    # Generate question
+    if "practice_question" not in st.session_state:
+        st.session_state.practice_question = random.choice(
+            QUESTIONS[topic_key]
+        )
 
-    else:
-        print("Keep practicing! 💪")
-        print(f"Basic concept coverage: {score:.0f}%")
-        print("Review the topic and try again.")
+    # Change question when topic changes
+    if st.session_state.get("practice_topic") != topic_key:
 
-    print("=" * 65)
+        st.session_state.practice_topic = topic_key
 
-    return True
+        st.session_state.practice_question = random.choice(
+            QUESTIONS[topic_key]
+        )
 
+    question_data = st.session_state.practice_question
 
-def start_practice_mode():
-    print()
-    print("=" * 65)
-    print("                    PRACTICE MODE")
-    print("=" * 65)
+    st.markdown("---")
 
-    print()
-    print("Practice programming and technical concepts.")
-    print()
-    print("Commands:")
-    print("1 → Python")
-    print("2 → OOP")
-    print("3 → SQL")
-    print("4 → Machine Learning")
-    print("5 → NLP")
-    print("back → Return to main chatbot")
+    st.subheader("💡 Practice Question")
 
-    while True:
+    st.write(question_data["question"])
 
-        choose_topic()
+    st.markdown("---")
 
-        choice = input("\nChoose a topic: ").strip().lower()
+    # Answer box
+    answer = st.text_area(
+        "✍️ Your Answer",
+        height=180,
+        placeholder="Type your answer here..."
+    )
 
-        if choice in ["back", "exit", "quit"]:
-            print("Returning to main chatbot...")
-            break
+    # Buttons
+    col1, col2, col3 = st.columns(3)
 
-        topic = get_topic(choice)
+    with col1:
 
-        if topic is None:
-            print()
-            print("Please choose a valid option from 1 to 5.")
-            continue
+        if st.button("✅ Check Answer"):
 
-        practice_topic(topic)
+            if answer.strip() == "":
+                st.warning("Please enter your answer first.")
 
+            else:
 
-if __name__ == "__main__":
-    start_practice_mode()
+                score = check_answer(
+                    answer,
+                    question_data["keywords"]
+                )
+
+                st.session_state.practice_score = score
+
+    with col2:
+
+        if st.button("⏭️ Skip Question"):
+
+            st.session_state.practice_question = random.choice(
+                QUESTIONS[topic_key]
+            )
+
+            st.session_state.practice_score = None
+
+            st.rerun()
+
+    with col3:
+
+        if st.button("🔄 New Question"):
+
+            st.session_state.practice_question = random.choice(
+                QUESTIONS[topic_key]
+            )
+
+            st.session_state.practice_score = None
+
+            st.rerun()
+
+    # Show result
+    if "practice_score" in st.session_state:
+
+        score = st.session_state.practice_score
+
+        if score is not None:
+
+            st.markdown("---")
+
+            st.subheader("📊 Result")
+
+            st.write(
+                f"Basic concept coverage: **{score:.0f}%**"
+            )
+
+            if score >= 70:
+
+                st.success(
+                    "Good attempt! ✅"
+                )
+
+            elif score >= 40:
+
+                st.warning(
+                    "You are on the right track. 👍"
+                )
+
+            else:
+
+                st.error(
+                    "Keep practicing! 💪"
+                )
+
+    # Expected concepts
+    if st.button("💡 Show Expected Concepts"):
+
+        st.markdown("### Expected Concepts")
+
+        for keyword in question_data["keywords"]:
+
+            st.write(f"• {keyword}")
