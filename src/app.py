@@ -6,38 +6,35 @@ from study_planner import find_plan
 from practice_mode import QUESTIONS, check_answer
 
 
-# =========================================================
+# ============================================================
 # PAGE CONFIGURATION
-# =========================================================
+# ============================================================
 
 st.set_page_config(
     page_title="Python AI Learning Assistant",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 
-# =========================================================
+# ============================================================
 # CUSTOM CSS
-# =========================================================
+# ============================================================
 
 st.markdown(
     """
     <style>
-
-    /* Main background */
     .stApp {
         background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
     }
 
-    /* Main title */
     .main-title {
         font-size: 42px;
         font-weight: 800;
         text-align: center;
-        margin-bottom: 5px;
         color: #1f2937;
+        margin-bottom: 5px;
     }
 
     .subtitle {
@@ -47,19 +44,18 @@ st.markdown(
         margin-bottom: 30px;
     }
 
-    /* Feature cards */
     .feature-card {
         background: white;
         padding: 22px;
         border-radius: 18px;
         text-align: center;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         min-height: 150px;
     }
 
     .feature-card h3 {
-        margin-bottom: 8px;
         color: #111827;
+        margin-bottom: 8px;
     }
 
     .feature-card p {
@@ -67,7 +63,6 @@ st.markdown(
         font-size: 14px;
     }
 
-    /* Section headings */
     .section-title {
         font-size: 28px;
         font-weight: 700;
@@ -76,146 +71,226 @@ st.markdown(
         margin-bottom: 15px;
     }
 
-    /* Question box */
     .question-box {
         background: white;
         padding: 25px;
         border-radius: 18px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         margin-top: 15px;
         margin-bottom: 20px;
     }
 
-    /* Sidebar */
     section[data-testid="stSidebar"] {
         background: white;
     }
 
-    /* Buttons */
     .stButton > button {
         border-radius: 10px;
         font-weight: 600;
     }
-
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
-# =========================================================
+# ============================================================
 # SESSION STATE
-# =========================================================
+# ============================================================
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+defaults = {
+    "messages": [],
+    "mode": "chat",
+    "practice_question": None,
+    "practice_topic": None,
+    "practice_score": None,
+    "show_concepts": False,
+}
 
-if "last_question" not in st.session_state:
-    st.session_state.last_question = None
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-if "mode" not in st.session_state:
-    st.session_state.mode = "chat"
 
-if "practice_question" not in st.session_state:
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+def extract_answer(result):
+    """
+    chatbot_engine may return either a string or a dictionary.
+    Always convert it into the clean answer text for the UI.
+    """
+    if isinstance(result, dict):
+        answer = result.get("answer")
+
+        if answer is None:
+            answer = result.get("definition")
+
+        if answer is None:
+            answer = result.get("response")
+
+        if answer is None:
+            answer = str(result)
+
+        return str(answer)
+
+    if result is None:
+        return "Sorry, I could not find an answer for that question."
+
+    return str(result)
+
+
+def get_chatbot_answer(question):
+    """
+    Get a clean answer from chatbot_engine.
+
+    New questions use get_answer().
+    Simple follow-up questions can use get_context_answer().
+    """
+    question = str(question).strip()
+
+    if not question:
+        return "Please enter a Python-related question."
+
+    try:
+        # First try the normal engine.
+        result = get_answer(question)
+        answer = extract_answer(result)
+
+        if answer and answer != "None":
+            return answer
+
+    except Exception:
+        pass
+
+    # Fallback to context engine.
+    try:
+        result = get_context_answer(question, None)
+        answer = extract_answer(result)
+
+        if answer and answer != "None":
+            return answer
+
+    except Exception as error:
+        return (
+            "Sorry, I could not generate an answer right now.\n\n"
+            f"Error: {error}"
+        )
+
+    return "Sorry, I could not find an answer for that question."
+
+
+def reset_practice():
     st.session_state.practice_question = None
-
-if "practice_topic" not in st.session_state:
-    st.session_state.practice_topic = None
-
-if "practice_score" not in st.session_state:
     st.session_state.practice_score = None
-
-if "show_concepts" not in st.session_state:
     st.session_state.show_concepts = False
 
 
-# =========================================================
+def choose_practice_question(topic_key):
+    questions = QUESTIONS.get(topic_key, [])
+
+    if not questions:
+        return None
+
+    if len(questions) == 1:
+        return questions[0]
+
+    current = st.session_state.practice_question
+
+    choices = [q for q in questions if q != current]
+
+    return random.choice(choices or questions)
+
+
+def get_question_text(question_data):
+    if isinstance(question_data, dict):
+        return str(question_data.get("question", "Practice question"))
+
+    return str(question_data)
+
+
+def get_keywords(question_data):
+    if isinstance(question_data, dict):
+        return question_data.get("keywords", [])
+
+    return []
+
+
+# ============================================================
 # SIDEBAR
-# =========================================================
+# ============================================================
 
 with st.sidebar:
-
     st.markdown("## ⚙️ Menu")
-
     st.markdown("---")
 
-    # Chatbot
-    if st.button(
-        "💬 Chatbot",
-        use_container_width=True
-    ):
+    if st.button("💬 Chatbot", use_container_width=True):
         st.session_state.mode = "chat"
 
-    # Study Planner
-    if st.button(
-        "📚 Study Planner",
-        use_container_width=True
-    ):
+    if st.button("📚 Study Planner", use_container_width=True):
         st.session_state.mode = "study"
 
-    # Practice Mode
-    if st.button(
-        "🎯 Practice Mode",
-        use_container_width=True
-    ):
+    if st.button("🎯 Practice Mode", use_container_width=True):
         st.session_state.mode = "practice"
-
-        st.session_state.practice_question = None
-        st.session_state.practice_score = None
-        st.session_state.show_concepts = False
+        reset_practice()
 
     st.markdown("---")
 
-    # Clear Chat
-    if st.button(
-        "🗑️ Clear Chat",
-        use_container_width=True
-    ):
+    if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = []
-        st.session_state.last_question = None
         st.rerun()
 
     st.markdown("---")
 
     st.markdown("### 💡 Example Questions")
 
-    st.write("• What is Python?")
-    st.write("• What is a variable?")
-    st.write("• What is a tuple?")
-    st.write("• List vs tuple")
-    st.write("• What is machine learning?")
-    st.write("• Explain decorators")
+    examples = [
+        "What is Python?",
+        "What is a variable?",
+        "What is a tuple?",
+        "List vs tuple",
+        "What is inheritance?",
+        "What is a generator?",
+        "Explain decorators",
+        "How does garbage collection work in Python?",
+        "How is memory managed in Python?",
+        "What is the GIL?",
+        "How does dictionary lookup work internally?",
+        "Why are strings immutable in Python?",
+    ]
+
+    for example in examples:
+        st.caption("• " + example)
 
     st.markdown("---")
-
     st.caption("🤖 Python AI Learning Assistant")
-    st.caption("Learn • Practice • Improve")
+    st.caption("Python + NLP + Machine Learning")
 
 
-# =========================================================
-# HEADER
-# =========================================================
+# ============================================================
+# MAIN HEADER
+# ============================================================
 
 st.markdown(
-    '<div class="main-title">🤖 Python AI Learning Assistant</div>',
-    unsafe_allow_html=True
+    '<div class="main-title">💬 Python Question-Answering Chatbot</div>',
+    unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="subtitle">'
-    'Learn Python, Machine Learning, NLP and more with your personal AI assistant.'
-    '</div>',
-    unsafe_allow_html=True
+    "Learn Python, practice concepts, and explore Python internals with AI."
+    "</div>",
+    unsafe_allow_html=True,
 )
 
 
-# =========================================================
-# HOME / CHAT MODE
-# =========================================================
+# ============================================================
+# CHATBOT MODE
+# ============================================================
 
 if st.session_state.mode == "chat":
 
-    # Feature cards
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -223,431 +298,333 @@ if st.session_state.mode == "chat":
             """
             <div class="feature-card">
                 <h3>💬 Ask Questions</h3>
-                <p>
-                Ask Python and technical questions
-                in natural language.
-                </p>
+                <p>Ask beginner to advanced Python questions.</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with col2:
         st.markdown(
             """
             <div class="feature-card">
-                <h3>📚 Study Planner</h3>
-                <p>
-                Generate structured 30-day
-                learning plans.
-                </p>
+                <h3>🧠 Learn Internals</h3>
+                <p>Explore memory, garbage collection, GIL and more.</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with col3:
         st.markdown(
             """
             <div class="feature-card">
-                <h3>🎯 Practice Mode</h3>
-                <p>
-                Practice programming and
-                technical concepts.
-                </p>
+                <h3>🚀 Practice</h3>
+                <p>Use Practice Mode and Study Planner to improve.</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-    st.markdown("---")
+    st.markdown("### 💡 Ask your Python question")
 
-    st.markdown(
-        '<div class="section-title">💬 Chat with your AI Assistant</div>',
-        unsafe_allow_html=True
+    st.info(
+        "Ask any Python-related question. "
+        "You can ask beginner, intermediate, advanced, "
+        "or deep Python internals questions."
     )
 
-    # Display old messages
+    # Previous messages
     for message in st.session_state.messages:
-
         with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-            st.markdown(
-                message["content"]
-            )
-
-    # Chat input
-    question = st.chat_input(
-        "Ask your Python question..."
-    )
+    question = st.chat_input("Ask your Python question...")
 
     if question:
+        clean_question = question.strip()
 
-        # Save user message
+        # Show user message immediately.
         st.session_state.messages.append(
             {
                 "role": "user",
-                "content": question
+                "content": clean_question,
             }
         )
 
-        with st.chat_message("user"):
+        answer = get_chatbot_answer(clean_question)
 
-            st.markdown(question)
-
-        answer_data = None
-
-        # Follow-up question
-        if st.session_state.last_question:
-
-            answer_data = get_context_answer(
-                question,
-                st.session_state.last_question,
-                None
-            )
-
-        # Normal question
-        if answer_data is None:
-
-            answer_data = get_answer(
-                question
-            )
-
-        answer = answer_data.get(
-            "answer",
-            "Sorry, I could not find an answer."
-        )
-
-        # Display answer
-        with st.chat_message("assistant"):
-
-            st.markdown(answer)
-
-        # Save assistant response
+        # Store only clean text, never the complete dictionary.
         st.session_state.messages.append(
             {
                 "role": "assistant",
-                "content": answer
+                "content": answer,
             }
         )
 
-        # Remember question
-        st.session_state.last_question = question
+        st.rerun()
 
 
-# =========================================================
+# ============================================================
 # STUDY PLANNER
-# =========================================================
+# ============================================================
 
 elif st.session_state.mode == "study":
 
     st.markdown(
-        '<div class="section-title">📚 Study Planner</div>',
-        unsafe_allow_html=True
+        '<div class="section-title">📚 30-Day Study Planner</div>',
+        unsafe_allow_html=True,
     )
 
     st.write(
-        "Create a structured 30-day learning plan."
+        "Choose a learning path and get a structured study plan."
     )
 
-    st.markdown("---")
-
-    subject = st.selectbox(
-        "🎓 Select your subject",
+    topic = st.selectbox(
+        "Choose your learning path",
         [
             "Python",
             "Machine Learning",
             "Data Analyst",
-            "AI"
-        ]
+            "AI",
+        ],
     )
 
     if st.button(
         "🚀 Generate Study Plan",
-        use_container_width=True
+        use_container_width=True,
     ):
+        try:
+            plan = find_plan(topic.lower())
 
-        plan = find_plan(
-            f"Create a {subject} study plan"
-        )
+            if not plan:
+                st.warning("No study plan was found for this topic.")
+            else:
+                st.success(
+                    f"Study plan generated for {topic}!"
+                )
 
-        if plan:
+                if isinstance(plan, dict):
 
-            st.success(
-                f"✅ {plan['title']}"
+                    # Common dictionary format.
+                    if "days" in plan:
+                        st.markdown("### 📅 Study Schedule")
+
+                        days = plan["days"]
+
+                        if isinstance(days, dict):
+                            for day, content in days.items():
+                                st.markdown(f"**{day}**")
+                                st.write(content)
+
+                        elif isinstance(days, list):
+                            for index, content in enumerate(days, 1):
+                                st.markdown(f"**Day {index}**")
+                                st.write(content)
+
+                    # Display any other useful plan fields.
+                    for key, value in plan.items():
+                        if key == "days":
+                            continue
+
+                        title = str(key).replace("_", " ").title()
+                        st.markdown(f"### {title}")
+
+                        if isinstance(value, (dict, list)):
+                            st.write(value)
+                        else:
+                            st.write(value)
+
+                elif isinstance(plan, list):
+                    for index, content in enumerate(plan, 1):
+                        st.markdown(f"**Day {index}**")
+                        st.write(content)
+
+                else:
+                    st.write(plan)
+
+        except Exception as error:
+            st.error(
+                "Unable to generate the study plan."
             )
-
-            st.markdown("### 🎯 Goal")
-
-            st.info(
-                plan["goal"]
-            )
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                st.markdown("### ⏰ Study Time")
-
-                st.write(
-                    plan["daily"]
-                )
-
-            with col2:
-
-                st.markdown("### 🚀 Project")
-
-                st.write(
-                    plan["project"]
-                )
-
-            st.markdown("---")
-
-            st.markdown("### 📖 Topics to Learn")
-
-            for number, topic in enumerate(
-                plan["topics"],
-                start=1
-            ):
-
-                st.write(
-                    f"**{number}.** {topic}"
-                )
-
-            st.markdown("---")
-
-            st.markdown(
-                "### ✍️ Practice Activities"
-            )
-
-            for activity in plan["practice"]:
-
-                st.write(
-                    f"✅ {activity}"
-                )
+            st.code(str(error))
 
 
-# =========================================================
+# ============================================================
 # PRACTICE MODE
-# =========================================================
+# ============================================================
 
 elif st.session_state.mode == "practice":
 
     st.markdown(
-        '<div class="section-title">🎯 Practice Mode</div>',
-        unsafe_allow_html=True
+        '<div class="section-title">🎯 Python Practice Mode</div>',
+        unsafe_allow_html=True,
     )
 
     st.write(
-        "Test your knowledge and improve your technical skills."
+        "Choose a topic, answer the question, and check your concept coverage."
     )
 
-    st.markdown("---")
+    topic_keys = list(QUESTIONS.keys())
 
-    # Topic selection
-    topic = st.selectbox(
-        "📚 Choose a topic",
-        [
-            "Python",
-            "OOP",
-            "SQL",
-            "Machine Learning",
-            "NLP"
-        ]
-    )
+    if not topic_keys:
+        st.error("No practice questions are available.")
+    else:
 
-    topic_key = topic.lower()
-
-    # Create first question
-    if (
-        st.session_state.practice_question is None
-        or st.session_state.practice_topic != topic_key
-    ):
-
-        st.session_state.practice_topic = topic_key
-
-        st.session_state.practice_question = random.choice(
-            QUESTIONS[topic_key]
+        topic_key = st.selectbox(
+            "Choose a topic",
+            topic_keys,
+            format_func=lambda x: str(x).replace("_", " ").title(),
         )
 
-        st.session_state.practice_score = None
-        st.session_state.show_concepts = False
-
-    question_data = st.session_state.practice_question
-
-    # Question box
-    st.markdown(
-        '<div class="question-box">',
-        unsafe_allow_html=True
-    )
-
-    st.markdown("### ❓ Practice Question")
-
-    st.info(
-        question_data["question"]
-    )
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    # Answer
-    answer = st.text_area(
-        "✍️ Write your answer",
-        height=180,
-        placeholder="Type your answer here..."
-    )
-
-    st.markdown("---")
-
-    col1, col2, col3 = st.columns(3)
-
-    # -----------------------------------------------------
-    # CHECK ANSWER
-    # -----------------------------------------------------
-
-    with col1:
-
-        if st.button(
-            "✅ Check Answer",
-            use_container_width=True
-        ):
-
-            if answer.strip() == "":
-
-                st.warning(
-                    "⚠️ Please write your answer first."
-                )
-
-            else:
-
-                score = check_answer(
-                    answer,
-                    question_data["keywords"]
-                )
-
-                st.session_state.practice_score = score
-
-                if score >= 70:
-
-                    st.success(
-                        f"🎉 Good attempt!\n\n"
-                        f"Concept coverage: {score:.0f}%"
-                    )
-
-                elif score >= 40:
-
-                    st.warning(
-                        f"👍 You are on the right track!\n\n"
-                        f"Concept coverage: {score:.0f}%"
-                    )
-
-                else:
-
-                    st.error(
-                        f"💪 Keep practicing!\n\n"
-                        f"Concept coverage: {score:.0f}%"
-                    )
-
-    # -----------------------------------------------------
-    # SKIP
-    # -----------------------------------------------------
-
-    with col2:
-
-        if st.button(
-            "⏭️ Skip Question",
-            use_container_width=True
-        ):
-
-            available_questions = QUESTIONS[topic_key]
-
-            current_question = (
-                st.session_state.practice_question
+        # If topic changed, reset the question.
+        if st.session_state.practice_topic != topic_key:
+            st.session_state.practice_topic = topic_key
+            st.session_state.practice_question = choose_practice_question(
+                topic_key
             )
-
-            # Make sure next question is different
-            if len(available_questions) > 1:
-
-                other_questions = [
-                    q for q in available_questions
-                    if q != current_question
-                ]
-
-                st.session_state.practice_question = random.choice(
-                    other_questions
-                )
-
-            else:
-
-                st.session_state.practice_question = (
-                    current_question
-                )
-
             st.session_state.practice_score = None
             st.session_state.show_concepts = False
 
+        if st.button(
+            "🎲 New Question",
+            use_container_width=True,
+        ):
+            st.session_state.practice_question = choose_practice_question(
+                topic_key
+            )
+            st.session_state.practice_score = None
+            st.session_state.show_concepts = False
             st.rerun()
 
-    # -----------------------------------------------------
-    # SHOW CONCEPTS
-    # -----------------------------------------------------
+        question_data = st.session_state.practice_question
 
-    with col3:
+        if question_data is None:
+            question_data = choose_practice_question(topic_key)
+            st.session_state.practice_question = question_data
 
-        if st.button(
-            "💡 Show Concepts",
-            use_container_width=True
-        ):
+        if question_data is not None:
 
-            st.session_state.show_concepts = True
+            question_text = get_question_text(question_data)
+            keywords = get_keywords(question_data)
 
-    # Show concepts
-    if st.session_state.show_concepts:
-
-        st.markdown("---")
-
-        st.markdown(
-            "### 💡 Expected Concepts"
-        )
-
-        for keyword in question_data["keywords"]:
-
-            st.write(
-                f"🔹 {keyword}"
+            st.markdown(
+                '<div class="question-box">',
+                unsafe_allow_html=True,
             )
 
-    # Previous score
-    if st.session_state.practice_score is not None:
+            st.markdown("### ❓ Practice Question")
+            st.info(question_text)
 
-        st.markdown("---")
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True,
+            )
 
-        st.markdown("### 📊 Your Result")
+            answer = st.text_area(
+                "✍️ Write your answer",
+                height=180,
+                placeholder="Type your answer here...",
+                key="practice_answer",
+            )
 
-        score = st.session_state.practice_score
+            col1, col2, col3 = st.columns(3)
 
-        st.progress(
-            int(score)
-        )
+            # ------------------------------------------------
+            # CHECK ANSWER
+            # ------------------------------------------------
 
-        st.write(
-            f"**Concept Coverage: {score:.0f}%**"
-        )
+            with col1:
+                if st.button(
+                    "✅ Check Answer",
+                    use_container_width=True,
+                ):
+                    if not answer.strip():
+                        st.warning(
+                            "⚠️ Please write your answer first."
+                        )
+                    else:
+                        try:
+                            score = check_answer(
+                                answer,
+                                keywords,
+                            )
+
+                            st.session_state.practice_score = score
+
+                            if score >= 70:
+                                st.success(
+                                    f"🎉 Good attempt!\n\n"
+                                    f"Concept coverage: {score:.0f}%"
+                                )
+                            elif score >= 40:
+                                st.warning(
+                                    f"👍 You are on the right track!\n\n"
+                                    f"Concept coverage: {score:.0f}%"
+                                )
+                            else:
+                                st.error(
+                                    f"💪 Keep practicing!\n\n"
+                                    f"Concept coverage: {score:.0f}%"
+                                )
+
+                        except Exception as error:
+                            st.error(
+                                "Could not check the answer."
+                            )
+                            st.code(str(error))
+
+            # ------------------------------------------------
+            # SKIP QUESTION
+            # ------------------------------------------------
+
+            with col2:
+                if st.button(
+                    "⏭️ Skip Question",
+                    use_container_width=True,
+                ):
+                    st.session_state.practice_question = choose_practice_question(
+                        topic_key
+                    )
+                    st.session_state.practice_score = None
+                    st.session_state.show_concepts = False
+                    st.rerun()
+
+            # ------------------------------------------------
+            # SHOW CONCEPTS
+            # ------------------------------------------------
+
+            with col3:
+                if st.button(
+                    "💡 Show Concepts",
+                    use_container_width=True,
+                ):
+                    st.session_state.show_concepts = True
+
+            if st.session_state.show_concepts:
+                st.markdown("### 💡 Key Concepts")
+
+                if keywords:
+                    st.write(", ".join(str(k) for k in keywords))
+                else:
+                    st.info(
+                        "No keyword list is available for this question."
+                    )
+
+            if st.session_state.practice_score is not None:
+                st.markdown("---")
+                st.metric(
+                    "Last Concept Coverage",
+                    f"{st.session_state.practice_score:.0f}%",
+                )
 
 
-# =========================================================
+# ============================================================
 # FOOTER
-# =========================================================
+# ============================================================
 
 st.markdown("---")
 
-st.markdown(
-    """
-    <div style="text-align:center; color:#6b7280; padding:15px;">
-        🤖 <b>Python AI Learning Assistant</b><br>
-        Learn • Practice • Build • Improve
-    </div>
-    """,
-    unsafe_allow_html=True
+st.caption(
+    "🐍 Python AI Learning Assistant | Python + NLP + Machine Learning"
 )
